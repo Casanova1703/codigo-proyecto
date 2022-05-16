@@ -1,0 +1,895 @@
+#include <SPFD5408_Adafruit_GFX.h>    // Core graphics library
+#include <SPFD5408_Adafruit_TFTLCD.h> // Hardware-specific library
+#include <SPFD5408_TouchScreen.h>
+#if defined(__SAM3X8E__)
+#undef __FlashStringHelper::F(string_literal)
+#define F(string_literal) string_literal
+#endif
+#define YP A3  // must be an analog pin, use "An" notation!
+#define XM A2  // must be an analog pin, use "An" notation!
+#define YM 9   // can be a digital pin
+#define XP 8   // can be a digital pin
+#define TS_MINX 125
+#define TS_MINY 85
+#define TS_MAXX 965
+#define TS_MAXY 905
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
+
+#define LCD_CS A3
+#define LCD_CD A2
+#define LCD_WR A1
+#define LCD_RD A0
+#define LCD_RESET A4
+#define BLACK   0x0000
+#define BLUE    0x001F
+#define RED     0xF800
+#define GREEN   0x07E0
+#define YELLOW  0xFFE0
+#define GOLD    0xFEA
+#define WHITE   0xFFFF
+#define CYAN    0x1FFF
+Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+#define MINPRESSURE 10
+#define MAXPRESSURE 1000
+#define LED_PIN   A5
+bool backsensed = false;
+bool resetsensed = false;
+int currentpage;
+int mano=0;
+int pros=0;
+int x,mov;
+int y;
+int z;
+int t=0;
+int g1=0;
+int g2=0;
+int inicio=0;
+int cas=0;
+int pasos = 33;                                     
+int reset = 31;                                     
+int direccion = 35; 
+int rt=37;
+int pas=39;
+int dir=41;                                 
+int numero_pasos = 0; 
+int vel=0;
+int g3=0;
+int np=0;
+unsigned long Tiempoahora = 0;
+#define BOXSIZE 40
+#define PENRADIUS 3
+#define oldcolor, currentcolor;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                    //
+void setup() {                                                                                      //
+tft.reset();                          //Reset de la pantalla touch TFT                              //
+tft.begin(tft.readID());                                                                            //
+pinMode(LED_PIN, OUTPUT);                                                                           //  
+digitalWrite(LED_PIN, LOW);
+pinMode(pasos, OUTPUT);            //definimos pasos como salida digital
+pinMode(direccion, OUTPUT);     //definimos direccion como salida digital
+pinMode(reset, OUTPUT);
+pinMode(rt, OUTPUT); 
+pinMode(pas, OUTPUT); 
+pinMode(dir, OUTPUT);     
+ tft.begin(0x9341);                    //Controlador de la pantalla a emplear 0x4532                //
+ tft.setRotation(3);                                                                                //
+ tft.fillScreen(WHITE);                //Establecemos el color del fondo de la pantalla             //
+ currentpage = 0;                                                                                   //                                                                                                 //                                                                                              //
+delay(10);                                                                                          //                                                                          
+  drawHome();                                                                                       //
+}                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+void drawHome()
+{
+
+  tft.fillScreen(WHITE);
+  tft.fillRoundRect(80, 150, 140, 60, 8, CYAN);
+  tft.drawRoundRect(80, 150, 140, 60, 8, BLUE);  //
+
+  tft.setCursor(30, 30);
+  tft.setTextSize(3);
+  tft.setTextColor(BLUE);
+  tft.print("DISPOSITIVO DE");
+  tft.setCursor(20, 60);
+  tft.print("MOVILIDAD PASIVA");
+  tft.setTextSize(2);
+  tft.setTextColor(BLACK);
+  
+  tft.setCursor(100, 170);
+  tft.print("INGRESAR");
+
+}
+
+void page1()
+
+{
+  tft.fillScreen(WHITE);
+  tft.fillRoundRect(30, 130, 110, 40, 8, CYAN); // mano derecha
+  tft.drawRoundRect(30, 130, 110, 40, 8, BLUE); //  mano derecha
+
+  tft.fillRoundRect(160, 130, 120, 40, 8, CYAN); // mano izquierda  
+  tft.drawRoundRect(160, 130, 120, 40, 8, BLUE); // mano izquierda 
+
+
+  tft.setCursor(10, 40);
+  tft.setTextSize(3);
+  tft.setTextColor(BLUE);
+  tft.print("SELECCIONAR MANO");
+
+  tft.setTextSize(2);
+  tft.setTextColor(BLACK);
+  tft.setCursor(40, 140);
+  tft.print("DERECHA");
+  
+  tft.setTextSize(2);
+  tft.setTextColor(BLACK);
+  tft.setCursor(165, 140);
+  tft.print("IZQUIERDA");
+}
+void page2()
+{
+
+  tft.fillScreen(WHITE);
+  tft.drawRoundRect(0, 0, 40, 40, 8, BLUE);  // BOTON ATRAS
+  tft.drawRoundRect(30, 100, 250, 40, 8, BLUE); // FLEXION EXTENSION
+  tft.drawRoundRect(30, 150, 260, 40, 8, BLUE); // ABDUCCION ADUCION
+  tft.drawRoundRect(30, 200, 280, 40, 8, BLUE); // PRONACION SUPINACION
+//  tft.fillRoundRect(80, 150, 140, 60, 8, GOLD);
+   
+  tft.setCursor(10,10);
+  tft.setTextSize(3);
+  tft.setTextColor(BLUE);
+  tft.print("<");
+  tft.setCursor(80, 20);
+  tft.setTextSize(3);
+  tft.setTextColor(BLUE);
+  tft.print("SELECCIONE");
+  tft.setCursor(80, 50);
+  tft.print("MOVILIDAD");
+  tft.setTextSize(2);
+  tft.setTextColor(BLACK);
+  tft.setCursor(40, 110);
+  tft.print("FLEXION - EXTENSION");
+  tft.setCursor(40, 160);
+  tft.print("ABDUCCION - ADUCCION");
+  tft.setCursor(40, 210);
+  tft.print("PRONACION - SUPINACION");
+
+}
+void page3()
+{
+  tft.fillScreen(WHITE);
+  tft.drawRoundRect(0, 0, 40, 40, 8, BLUE);  // BOTON ATRAS
+  tft.drawRoundRect(70, 30, 70, 30, 8, BLUE);// LOW
+  tft.drawRoundRect(150, 30, 70, 30, 8, BLUE);//MEDIUM
+  tft.drawRoundRect(230, 30, 70, 30, 8, BLUE);//HIGH
+  tft.drawRoundRect(30, 90, 45, 30, 8, BLUE);// VISOR GRADOS
+  tft.drawRoundRect(80, 90, 30, 30, 8, BLUE);//GRADOS ABAJO
+  tft.drawRoundRect(115, 90, 30, 30, 8, BLUE);// GRADOS ARRIBA
+  tft.drawRoundRect(200, 90, 45, 30, 8, BLUE);// VISOR GRADOS 2
+  tft.drawRoundRect(250, 90, 30, 30, 8, BLUE);// ABAJO GRADOS 2
+  tft.drawRoundRect(285, 90, 30, 30, 8, BLUE);// ARRIBA GRADOS 2
+  tft.drawRoundRect(200, 160, 30, 30, 8, BLUE);// ABAJO TIEMPO
+  tft.drawRoundRect(235, 160, 30, 30, 8, BLUE);// ARRIBA TIEMPO
+  tft.drawRoundRect(130, 160, 65, 30, 8, BLUE);// visor TIEMPO
+  tft.drawRoundRect(235, 200, 85, 40, 8, BLUE);//recuadro iniciar
+
+  tft.setCursor(120,5);
+  tft.setTextSize(2);
+  tft.setTextColor(BLUE);
+  tft.print("VELOCIDAD");
+  tft.setCursor(130,73);
+  tft.print("GRADOS");
+  tft.setCursor(140,143);
+  tft.print("TIEMPO");
+  tft.setTextSize(2);
+  tft.setCursor(235,210);
+  tft.print("INICIAR");
+  tft.setCursor(10,10);
+  tft.setTextSize(3);
+  tft.setTextColor(BLUE);
+  tft.print("<");
+ tft.setCursor(122,94);
+  tft.setTextSize(3);
+  tft.setTextColor(BLUE);
+  tft.print(">");
+  tft.setCursor(85,94);
+  tft.print("<");
+  tft.setCursor(290,94);
+  tft.print(">");
+  tft.setCursor(255,94);
+  tft.print("<");
+   tft.setCursor(240,165);
+  tft.print(">");
+  tft.setCursor(205,165);
+  tft.print("<");
+  tft.setTextSize(2);
+  tft.setCursor(120,195);
+  tft.print("MINNUTOS");
+  
+}
+// INICIO DEL PROCESO
+void page4(){
+  tft.fillScreen(WHITE);
+}
+
+void proceso() {
+ 
+ g1=g1 * 7.222222222;
+ g2=g2* -7.222222222;
+ g3 =90* 19;
+ tft.setTextColor(GOLD, WHITE);
+ tft.setTextSize(2);
+ tft.setCursor(30,100);
+ tft.print ("flexion - extension");
+  while (g3>np){   // Girohacia la izquierda en grados
+       pas_izq();
+       np = np + 1;
+   }
+   t=t*60;
+    while(millis()/1000<Tiempoahora+t)
+  {
+     while (g1>numero_pasos){   // Girohacia la izquierda en grados
+       paso_izq();
+       numero_pasos = numero_pasos + 1;
+   }
+   delay(10); 
+   while (g2<numero_pasos){   // Giro hacia la derecha en grados
+        paso_der();
+        numero_pasos = numero_pasos -1;
+   }
+  delay(10); 
+  }
+  g1=0;
+  g2=2;
+  g3=0;
+  
+  while (g1>numero_pasos){   // Girohacia la izquierda en grados
+       paso_izq();
+       numero_pasos = numero_pasos + 1;
+   }
+   while (g2<numero_pasos){   // Giro hacia la derecha en grados
+        paso_der();
+        numero_pasos = numero_pasos -1;
+   }
+   while (g3<np){   // Giro hacia la derecha en grados
+        pas_der();
+        np = np -1;
+   }
+   apagado();
+ t=0;
+ inicio=0;
+ g1=0;
+ g2=0;
+ mano=0;
+ pros=0;
+ page1 ();
+ currentpage= 1;
+}
+void proceso1(){
+ 
+ g1=g1 * 7.222222222;
+ g2=g2* -7.222222222;
+ t=t*60;
+ tft.setTextColor(GOLD, WHITE);
+ tft.setTextSize(2);
+ tft.setCursor(30,100);
+ tft.print ("abducion - aducion");
+    while(millis()/1000<Tiempoahora+t)
+  {
+     while (g1>numero_pasos){   // Girohacia la izquierda en grados
+       paso_izq();
+       numero_pasos = numero_pasos + 1;
+   }
+   delay(10); 
+   while (g2<numero_pasos){   // Giro hacia la derecha en grados
+        paso_der();
+        numero_pasos = numero_pasos -1;
+   }
+  delay(10); 
+  }
+  g1=0;
+  g2=2;
+  while (g1>numero_pasos){   // Girohacia la izquierda en grados
+       paso_izq();
+       numero_pasos = numero_pasos + 1;
+   }
+   while (g2<numero_pasos){   // Giro hacia la derecha en grados
+        paso_der();
+        numero_pasos = numero_pasos -1;
+   }
+   apagado();
+ t=0;
+ inicio=0;
+ mano=0;
+ pros=0;
+ g1=0;
+ g2=0;
+ page1 ();
+ currentpage= 1;
+}
+void proceso2(){
+ g3 =90* 19;
+ g1=g3 - (g1 * 19);
+ g2=g3 + (g2* 19);
+ tft.setTextColor(GOLD, WHITE);
+ tft.setTextSize(2);
+ tft.setCursor(30,100);
+ tft.print ("pronacion - supinacion");
+  while (g3>np){   // Girohacia la izquierda en grados
+       pas_izq();
+       np = np + 1;
+   }
+   t=t*60;
+    while(millis()/1000<Tiempoahora+t)
+  {
+  while (g1<np){   // Giro hacia la derecha en grados
+        pas_der();
+        np = np -1;
+   }
+  delay(10); 
+     while (g2>np){   // Girohacia la izquierda en grados
+       pas_izq();
+       np = np + 1;
+   }
+  delay(10);
+   
+  }
+  g1=0;
+  g2=2;
+  g3=0;
+  
+   while (g3<np){   // Giro hacia la derecha en grados
+        pas_der();
+        np = np -1;
+   }
+ apagado();
+ t=0;
+ inicio=0;
+ g1=0;
+ g2=0;
+ mano=0;
+ pros=0;
+ page1 ();
+ currentpage= 1;
+}
+void proceso3(){
+
+ g1=g1 * -7.222222222;
+ g2=g2* 7.222222222;
+ g3 =90* -19;
+ tft.setTextColor(GOLD, WHITE);
+ tft.setTextSize(2);
+ tft.setCursor(30,100);
+ tft.print ("flexion - extension");
+
+ while (g3<np){   // Giro hacia la derecha en grados
+        pas_der();
+        np = np -1;
+   }
+ 
+   t=t*60;
+    while(millis()/1000<Tiempoahora+t)
+  {
+    while (g1<numero_pasos){   // Giro hacia la derecha en grados
+        paso_der();
+        numero_pasos = numero_pasos -1;
+   }
+     
+   delay(10); 
+   while (g2>numero_pasos){   // Girohacia la izquierda en grados
+       paso_izq();
+       numero_pasos = numero_pasos + 1;
+   }
+  delay(10); 
+  }
+  g1=0;
+  g2=2;
+  g3=0;
+
+  while (g1<numero_pasos){   // Giro hacia la derecha en grados
+        paso_der();
+        numero_pasos = numero_pasos -1;
+   }
+  while (g2>numero_pasos){   // Girohacia la izquierda en grados
+       paso_izq();
+       numero_pasos = numero_pasos + 1;
+   }
+   
+   while (g3>np){   // Girohacia la izquierda en grados
+       pas_izq();
+       np = np + 1;
+   }
+   apagado();
+ t=0;
+ inicio=0;
+ g1=0;
+ g2=0;
+ mano=0;
+ pros=0;
+ page1 ();
+ currentpage= 1;
+ 
+}
+void proceso4(){
+  g1=g1 * -7.222222222;
+ g2=g2* 7.222222222;
+ t=t*60;
+ tft.setTextColor(GOLD, WHITE);
+ tft.setTextSize(2);
+ tft.setCursor(30,100);
+ tft.print ("abducion - aduccion ");
+    while(millis()/1000<Tiempoahora+t)
+  {
+    while (g1<numero_pasos){   // Giro hacia la derecha en grados
+        paso_der();
+        numero_pasos = numero_pasos -1;
+   }
+     
+   delay(10); 
+   while (g2>numero_pasos){   // Girohacia la izquierda en grados
+       paso_izq();
+       numero_pasos = numero_pasos + 1;
+   }
+  delay(10); 
+  }
+  g1=0;
+  g2=2;
+  while (g1<numero_pasos){   // Giro hacia la derecha en grados
+        paso_der();
+        numero_pasos = numero_pasos -1;
+   }
+  while (g2>numero_pasos){   // Girohacia la izquierda en grados
+       paso_izq();
+       numero_pasos = numero_pasos + 1;
+   }
+   
+   apagado();
+ t=0;
+ inicio=0;
+ mano=0;
+ pros=0;
+ g1=0;
+ g2=0;
+ page1 ();
+ currentpage= 1;
+  
+}
+
+void proceso5(){
+ g3 =90* - 19;
+ g1=g3 + (g1 * 19);
+ g2=g3 - (g2* 19);
+ tft.setTextColor(GOLD, WHITE);
+ tft.setTextSize(2);                                     
+ tft.setCursor(30,100);
+ tft.print ("pronacion - supinacion");
+ while (g3<np){   // Giro hacia la derecha en grados
+        pas_der();
+        np = np -1;
+   }
+  
+   t=t*60;
+    while(millis()/1000<Tiempoahora+t)
+  {
+    while (g1>np){   // Girohacia la izquierda en grados
+       pas_izq();
+       np = np + 1;
+   }
+  
+  delay(10); 
+    while (g2<np){   // Giro hacia la derecha en grados
+        pas_der();
+        np = np -1;
+   } 
+  delay(10);
+   
+  }
+  g1=0;
+  g2=2;
+  g3=0;
+  
+  while (g3>np){   // Girohacia la izquierda en grados
+       pas_izq();
+       np = np + 1;
+   }
+   
+ apagado();
+ t=0;
+ inicio=0;
+ g1=0;
+ g2=0;
+ mano=0;
+ pros=0;
+ page1 ();
+ currentpage= 1;
+  
+}
+void pas_der(){ 
+digitalWrite(rt, HIGH);           //Cuando reset se encuentre en HIGH el motor arranca
+digitalWrite(dir, HIGH);   //mandamos direccion al servo
+digitalWrite(pas, HIGH); 
+delayMicroseconds(5);// ponemos a high «pasos»
+digitalWrite(pas, LOW);                  // ponemos a low «pasos»
+delayMicroseconds(vel);  // leemos la referencia de velocidad
+
+}
+
+void pas_izq() {
+//—————————Cambio de sentido de giro——————————–
+
+
+digitalWrite(rt, HIGH);             //Cuando reset se encuentre en HIGH el motor arranca
+digitalWrite(dir, LOW);      //mandamos direccion al servo
+digitalWrite(pas, LOW); 
+delayMicroseconds(vel);
+digitalWrite(pas, HIGH);                  // ponemos a low «pasos»
+delayMicroseconds(5);   // leemos la referencia de velocidad
+  
+}
+void paso_der(){ 
+digitalWrite(reset, HIGH);           //Cuando reset se encuentre en HIGH el motor arranca
+digitalWrite(direccion, HIGH);   //mandamos direccion al servo
+digitalWrite(pasos, HIGH); 
+delayMicroseconds(5);// ponemos a high «pasos»
+digitalWrite(pasos, LOW);                  // ponemos a low «pasos»
+delayMicroseconds(vel);  // leemos la referencia de velocidad
+
+}
+
+void paso_izq() {
+//—————————Cambio de sentido de giro——————————–
+
+
+digitalWrite(reset, HIGH);             //Cuando reset se encuentre en HIGH el motor arranca
+digitalWrite(direccion, LOW);      //mandamos direccion al servo
+digitalWrite(pasos, LOW); 
+delayMicroseconds(vel);
+digitalWrite(pasos, HIGH);                  // ponemos a low «pasos»
+delayMicroseconds(5);   // leemos la referencia de velocidad
+  
+}
+
+void apagado() { 
+digitalWrite(reset, LOW);
+digitalWrite(rt, LOW);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+void loop() {
+Tiempoahora = millis()/1000;
+ digitalWrite(13, HIGH);
+TSPoint p = waitTouch();    // Read touchscreen
+ digitalWrite(13, LOW);
+
+  if (currentpage == 0)
+  {
+      if (p.x > 170 && p.x < 220 && p.y > 64 && p.y < 200 )
+      {
+       page1(); 
+       currentpage = 1; 
+       delay(70);
+       p.x = 0;
+       p.y = 0;
+      }
+    
+
+  }
+
+  
+/////////////////////////////MANO DERECHA MOVILIZACIONES////////////////////////////////////////////////////
+
+if (currentpage == 1) 
+  
+{
+
+      // derecha 
+      if (p.x > 150 && p.x < 185 && p.y > 17 && p.y < 125){
+       page2();
+       currentpage = 2;
+       delay(70);
+       mano=1;
+       p.x = 0;
+       p.y = 0;
+      }
+      //izquierda
+      if (p.x > 150 && p.x <185 && p.y > 150 && p.y < 260)
+      {
+       page2(); 
+       currentpage = 2;
+       delay(70);
+       mano=2;
+       p.x = 0;
+       p.y = 0; 
+      } 
+ 
+}
+
+if (currentpage == 2){
+  if (p.z > 10 && p.z < 1000)
+    {
+      // BOTON ATRAS
+ if (p.x > 0 && p.x < 60 && p.y > 0 && p.y < 30){
+       page1();
+       currentpage = 1;
+       pros=0;
+       delay(70);
+       p.x = 0;
+       p.y = 0;
+      }
+      //flexion extension
+      if (p.x > 120 && p.x <150 && p.y > 30 && p.y < 250)
+      {
+       page3();
+       currentpage = 3;
+       tft.setCursor(30,125);
+       tft.setTextSize(2);
+       tft.setTextColor(BLUE);
+       tft.print("FLEXION");
+       tft.setCursor(190,125);
+       tft.print("EXTENSION");
+       delay(70);
+       pros=1;
+       p.x = 0;
+       p.y = 0;
+      } 
+      // abduccion aduccion
+      if (p.x > 170 && p.x <200 && p.y > 30 && p.y < 250)
+      {
+       page3();
+       currentpage = 3;
+       tft.setCursor(30,125);
+       tft.setTextSize(2);
+       tft.setTextColor(BLUE);
+       tft.print("ABDUCCION");
+       tft.setCursor(190,125);
+       tft.print("ADUCCION");
+       delay(70);
+       pros=2;
+       p.x = 0;
+       p.y = 0;
+      } 
+      // pronacion supinacion
+      if (p.x > 220 && p.x <240 && p.y > 30 && p.y < 250)
+      {
+       page3();
+       currentpage = 3;
+       tft.setCursor(30,125);
+       tft.setTextSize(2);
+       tft.setTextColor(BLUE);
+       tft.print("PRONACION");
+       tft.setCursor(190,125);
+        tft.print("SUPINACION");
+       delay(70);
+       pros=3;
+       p.x = 0;
+       p.y = 0;
+      } 
+    }
+}
+
+if (currentpage == 3){
+  tft.drawRoundRect(70, 30, 70, 30, 8, BLUE);// LOW
+  tft.drawRoundRect(150, 30, 70, 30, 8, BLUE);//MEDIUM
+  tft.drawRoundRect(230, 30, 70, 30, 8, BLUE);//HIGH
+  tft.setCursor(35,95);
+  tft.setTextSize(3);
+  tft.setTextColor(BLUE,WHITE);
+  tft.print(g1); 
+  tft.setCursor(205,95);
+  tft.setTextSize(3);
+  tft.setTextColor(BLUE,WHITE);
+  tft.print(g2);
+  tft.setCursor(135,165);
+  tft.setTextSize(3);
+  tft.setTextColor(BLUE,WHITE);
+  tft.print(t);
+  
+  if (p.z > 10 && p.z < 1000)
+    {
+      //boton atras
+ if (p.x > 0 && p.x < 60 && p.y > 0 && p.y < 30){
+       page2();
+       currentpage = 2;
+       delay(70);
+       g1=0;
+       g2=0;
+       t=0;
+       
+      }
+// velocidad low
+if (p.x > 40 && p.x < 68 && p.y > 60 && p.y < 120){
+       
+       vel= 2500;
+       tft.fillRoundRect(70, 30, 70, 30, 8, CYAN);// LOW
+       tft.fillRoundRect(150, 30, 70, 30, 8, WHITE);//MEDIUM
+       tft.fillRoundRect(230, 30, 70, 30, 8, WHITE);//HIGH
+       tft.drawRoundRect(70, 30, 70, 30, 8, BLUE);// LOW
+       tft.drawRoundRect(150, 30, 70, 30, 8, BLUE);//MEDIUM
+       tft.drawRoundRect(230, 30, 70, 30, 8, BLUE);//HIG
+       p.x = 0;
+       p.y = 0;
+       delay(70);
+      }
+// velocidad half
+if (p.x > 40 && p.x < 68 && p.y > 140 && p.y < 200){
+       
+       vel=2000;
+       tft.fillRoundRect(70, 30, 70, 30, 8, CYAN);// LOW
+       tft.fillRoundRect(150, 30, 70, 30, 8, CYAN);//MEDIUM
+       tft.fillRoundRect(230, 30, 70, 30, 8, WHITE);//HIGH
+       tft.drawRoundRect(70, 30, 70, 30, 8, BLUE);// LOW
+       tft.drawRoundRect(150, 30, 70, 30, 8, BLUE);//MEDIUM
+       tft.drawRoundRect(230, 30, 70, 30, 8, BLUE);//HIG
+       p.x = 0;
+       p.y = 0;
+       delay(70);
+      }
+// velocidad high
+if (p.x > 40 && p.x < 68 && p.y > 215 && p.y < 275){
+       
+       vel=1500;
+       tft.fillRoundRect(70, 30, 70, 30, 8, CYAN);// LOW
+       tft.fillRoundRect(150, 30, 70, 30, 8, CYAN);//MEDIUM
+       tft.fillRoundRect(230, 30, 70, 30, 8, CYAN);//HIGH
+       tft.drawRoundRect(70, 30, 70, 30, 8, BLUE);// LOW
+       tft.drawRoundRect(150, 30, 70, 30, 8, BLUE);//MEDIUM
+       tft.drawRoundRect(230, 30, 70, 30, 8, BLUE);//HIG
+       p.x = 0;
+       p.y = 0;
+      delay(70);
+      }
+// avanzar grados 1
+if (p.x > 100 && p.x < 130 && p.y > 100 && p.y < 130){
+  if (g1<90){     
+       g1=g1+1;
+       delay(70);
+       tft.fillRoundRect(30, 90, 45, 30, 8, WHITE);
+       tft.drawRoundRect(30, 90, 45, 30, 8, BLUE);
+       tft.setCursor(35,95);
+       tft.setTextSize(3);
+       tft.setTextColor(BLUE,WHITE);
+       tft.print(g1); 
+     
+       
+  }
+       
+      }
+
+// disminuir grados 1
+if (p.x > 100 && p.x < 130 && p.y > 60 && p.y < 90){
+  if(g1>0){
+       g1=g1-1;
+       delay(70);
+       tft.fillRoundRect(30, 90, 45, 30, 8, WHITE);
+       tft.drawRoundRect(30, 90, 45, 30, 8, BLUE);
+       tft.setCursor(35,95);
+       tft.setTextSize(3);
+       tft.setTextColor(BLUE,WHITE);
+       tft.print(g1); 
+     
+       
+       
+  }
+      
+      }
+// avanzar grados 2
+if (p.x > 100 && p.x < 130 && p.y > 270 && p.y < 295){
+  if (g2<90){
+       g2=g2+1;
+       delay(70);
+       tft.fillRoundRect(200, 90, 45, 30, 8, WHITE);
+       tft.drawRoundRect(200, 90, 45, 30, 8, BLUE);
+       tft.setCursor(205,95);
+       tft.setTextSize(3);
+       tft.setTextColor(BLUE,WHITE);
+       tft.print(g2);
+       
+  }
+}
+
+// disminuir grados 2
+if (p.x > 100 && p.x < 130 && p.y > 235 && p.y < 260){
+if(g2>0){
+       g2=g2-1;
+       delay(70);
+       tft.fillRoundRect(200, 90, 45, 30, 8, WHITE);
+       tft.drawRoundRect(200, 90, 45, 30, 8, BLUE);
+       tft.setCursor(205,95);
+       tft.setTextSize(3);
+       tft.setTextColor(BLUE,WHITE);
+       tft.print(g2);
+       
+  }
+}
+
+//// avanzar tiempo
+if (p.x > 178 && p.x < 197 && p.y > 220 && p.y < 250){
+if(t<200){
+       t=t+1;
+       delay(70);
+       tft.fillRoundRect(130, 160, 65, 30, 8, WHITE);
+       tft.drawRoundRect(130, 160, 65, 30, 8, BLUE);
+       tft.setCursor(135,165);
+       tft.setTextSize(3);
+       tft.setTextColor(BLUE,WHITE);
+       tft.print(t);
+       
+  }
+}
+
+// disminuir tiempo
+if (p.x > 178 && p.x < 197 && p.y > 180 && p.y < 210){
+if(t>0){
+       t=t-1;
+       delay(70);
+       tft.fillRoundRect(130, 160, 65, 30, 8, WHITE);
+       tft.drawRoundRect(130, 160, 65, 30, 8, BLUE);
+       tft.setCursor(135,165);
+       tft.setTextSize(3);
+       tft.setTextColor(BLUE,WHITE);
+       tft.print(t);
+       
+       
+}
+      
+    }
+    if (p.x > 220 && p.x < 240 && p.y > 220 && p.y < 300){
+       delay(70);
+       page4();
+       currentpage = 4;
+       inicio=1;
+       
+
+      
+    }
+    
+}
+//pantalla de inicio
+if (currentpage == 4) 
+  
+{
+  if(inicio == 1 ){
+   //flexion derecha
+  if(mano==1 && pros ==1){
+    proceso();
+  }
+  //aduccion derecha
+  if(mano==1 && pros ==2){
+    proceso1();
+  }
+ // pronacion derecha
+  if(mano==1 && pros ==3){
+    proceso2();
+  }
+  //flexion izquierda
+  if(mano==2 && pros ==1){
+    proceso3();
+  }
+  //aducion izquierda
+  if(mano==2 && pros ==2){
+    proceso4();
+  }
+  //pronacion izquierda
+  if(mano==2 && pros ==3){
+    proceso5();
+  }
+  }
+  
+ }
+ }
+}
+
+TSPoint waitTouch() {
+  TSPoint p;
+  do {
+    p = ts.getPoint(); 
+    pinMode(XM, OUTPUT);
+    pinMode(YP, OUTPUT);
+  } while((p.z < MINPRESSURE )|| (p.z > MAXPRESSURE));
+  p.x = map(p.x, TS_MINX, TS_MAXX, 240, 0);
+  p.y = map(p.y, TS_MINY, TS_MAXY, 320, 0);;
+  return p;
+}
